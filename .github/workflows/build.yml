@@ -12,8 +12,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0 
+
+      # NEW STEP: Generate the coverage report inside the GitHub runner
+      - name: Run tests and generate coverage
+        run: |
+          python3 -m pip install -r requirements.txt
+          PYTHONPATH=src python3 -m pytest --cov=src --cov-report=xml:coverage.xml tests/
+          # Fix the absolute path issue so SonarCloud can read the file
+          sed -i "s|$(pwd)/||g" coverage.xml
+
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v6
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
